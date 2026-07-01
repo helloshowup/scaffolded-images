@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The skill learns</title>
+<style>
+ html,body{margin:0;height:100%;}
+ body{background:#F4F0E8;font-family:Geist,Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1C1C2E;display:flex;flex-direction:column;overflow:hidden;}
+ #scroll{flex:1;overflow-y:auto;scrollbar-width:none;padding:20px 22px 8px;}
+ #scroll::-webkit-scrollbar{display:none;}
+ #msgs{display:flex;flex-direction:column;gap:12px;max-width:880px;margin:0 auto;width:100%;}
+ .row{display:flex;flex-direction:column;max-width:76%;}
+ .row.u{align-self:flex-end;align-items:flex-end;}
+ .row.c{align-self:flex-start;align-items:flex-start;}
+ .lab{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a8474;margin:0 4px 4px;}
+ .b{padding:9px 13px;border-radius:14px;font-size:15px;line-height:1.5;word-break:break-word;}
+ .u .b{background:#E8B84B;color:#3a2c05;border-bottom-right-radius:4px;}
+ .c .b{background:#ffffff;color:#1C1C2E;border:1px solid #e3dccb;border-left:3px solid #B5E550;border-bottom-left-radius:4px;}
+ .dots{display:flex;gap:4px;padding:11px 14px;background:#ffffff;border:1px solid #e3dccb;border-radius:14px;}
+ .dots span{width:6px;height:6px;border-radius:50%;background:#b3ab97;animation:dd 1s infinite;}
+ @keyframes dd{0%,60%,100%{opacity:.3}30%{opacity:1}}
+ footer{display:flex;align-items:center;gap:14px;padding:10px 22px;border-top:1px solid #e6dfce;}
+ #prog{flex:1;height:3px;background:#e6dfce;border-radius:2px;overflow:hidden;}
+ #bar{height:100%;width:0;background:#E8B84B;}
+ #replay{display:inline-flex;align-items:center;gap:6px;font-size:13px;padding:6px 14px;border:1px solid #d9d2c2;border-radius:6px;background:#ffffff;color:#5a5448;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="scroll"><div id="msgs"></div></div>
+<footer><div id="prog"><div id="bar"></div></div><button id="replay">&#8635; Replay</button></footer>
+<script>
+(function(){
+  var SCRIPT=[{"from": "user", "text": "the skill fired but it was wrong this time. annoying"}, {"from": "claude", "text": "Tell me why it was wrong, in one line. That line is the tune."}, {"from": "user", "text": "it stopped me when i actually had the evidence, i wasnt guessing"}, {"from": "claude", "text": "Good. We add: skip the check when the evidence is already cited. Want me to patch the skill?"}, {"from": "user", "text": "yes. so it learns from the miss"}];
+  var LABELS={user:"you",claude:"claude"};
+  var msgs=document.getElementById('msgs'),scroll=document.getElementById('scroll');
+  var bar=document.getElementById('bar'),replay=document.getElementById('replay');
+  var timers=[];
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+  function down(){scroll.scrollTop=scroll.scrollHeight;}
+  function bubble(t){var r=document.createElement('div');r.className='row '+(t.from==='user'?'u':'c');
+    var l=document.createElement('div');l.className='lab';l.textContent=LABELS[t.from];
+    var b=document.createElement('div');b.className='b';b.textContent=t.text;r.appendChild(l);r.appendChild(b);return r;}
+  function typing(t){var r=document.createElement('div');r.style.cssText='display:flex;'+(t.from==='user'?'align-self:flex-end;':'align-self:flex-start;');
+    var d=document.createElement('div');d.className='dots';for(var i=0;i<3;i++){var s=document.createElement('span');s.style.animationDelay=(i*0.15)+'s';d.appendChild(s);}r.appendChild(d);return r;}
+  function run(){timers.forEach(clearTimeout);timers=[];msgs.innerHTML='';bar.style.transition='none';bar.style.width='0%';
+    var typeMs=650,reads=SCRIPT.map(function(t){return clamp(t.text.length*55,1700,4800);});
+    var total=reads.reduce(function(a,b){return a+b;},0)+SCRIPT.length*typeMs+450;
+    timers.push(setTimeout(function(){bar.style.transition='width '+(total/1000)+'s linear';bar.style.width='100%';},80));
+    var tm=380;SCRIPT.forEach(function(turn,i){
+      timers.push(setTimeout(function(){msgs.appendChild(typing(turn));down();},tm));tm+=typeMs;
+      timers.push(setTimeout(function(){if(msgs.lastChild)msgs.removeChild(msgs.lastChild);var row=bubble(turn);msgs.appendChild(row);
+        row.style.opacity='0';row.style.transform='translateY(6px)';row.style.transition='opacity .45s ease, transform .45s ease';
+        requestAnimationFrame(function(){row.style.opacity='1';row.style.transform='translateY(0)';});down();},tm));tm+=reads[i];});}
+  replay.addEventListener('click',run);run();
+})();
+</script>
+</body>
+</html>
